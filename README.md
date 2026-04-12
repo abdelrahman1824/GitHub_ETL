@@ -7,3 +7,5 @@ Phase 3: Load processed data into PostgreSQL
 Phase 4: Orchestrate the entire pipeline using Apache Airflow
 
 Updates in the README file will be documented, stay tuned!
+
+## This is a change to test syncing of Local repo and GitHub repo (main branch)
