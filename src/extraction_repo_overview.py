@@ -2,6 +2,8 @@ import requests
 from dotenv import load_dotenv
 import os
 
+# ---------- Loading Environmental Vraiables, Personal Access Token  ---------- #
+
 #PAT (Personal Access Token) validation
 load_dotenv()
 token = os.getenv("GITHUB_TOKEN")
@@ -10,6 +12,8 @@ if not token:
     raise ValueError("GITHUB_TOKEN not found in environmental variables")
 else:
     print("GUTHUB_TOKEN is found!")
+
+# ---------- Buildin an API Request from GitHub tensorflow ---------- #
 
 #Building an API request authentication
 url = "https://api.github.com/repos/tensorflow/tensorflow"
