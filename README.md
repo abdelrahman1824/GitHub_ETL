@@ -8,6 +8,18 @@ Phase 4: Orchestrate the entire pipeline using Apache Airflow
 
 Updates in the README file will be documented, stay tuned!
 
-## This is a change to test syncing of Local repo and GitHub repo (main branch)
+# This is a change to test syncing of Local repo and GitHub repo (main branch)
 
-## This another change for cross validation between Local and GitHub
+# This another change for cross validation between Local and GitHub
+
+# Phase 1.1 
+15/04/2026: Phase 1.1 is now complete, a script is ready for extracting raw data from tensorflow_tensorflow repo and stored in a json file, the script also handles errors for anything related to API requests and authentication and handles any data serialization, file and directory errors. The script includes the following functions:
+Configuration => Loads the GitHub Token that is used for requests authentication, this function handles errors of the environmental variable GITHUB_TOKEN is not found or readable by python.
+
+Request setup => This function is mainly responsible for setting-up the request parameters, fo our case we are only using headers for proper identification and authorization for our request.
+
+Data Extraction => This is the function responsiple for getting the data from our endpoint repo, it handles errors like timeout so the request doesn't get stuck if we can't retrieve our data for any reason and it handles response errors so we know whether our data retrieval is successfull or not.
+
+Data File Creation => Creating a file timestamped for data history, serializing data and writing them in the newly created JSON file, this function handles errors like missing directories or serializing data errors.
+
+# Phase 1.2
