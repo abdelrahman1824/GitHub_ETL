@@ -73,7 +73,7 @@ def save_to_json_file(data):
 
 # ---------- Main Extraction Script ---------- #
 
-#token = load_github_token()
-#headers = build_api_headers(token)
-#data = fetch_tensorflow_repo(headers)
-#save_to_json_file(data)
+token = load_github_token()
+headers = build_api_headers(token)
+data = fetch_tensorflow_repo(headers)
+save_to_json_file(data)
