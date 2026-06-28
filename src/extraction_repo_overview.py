@@ -43,7 +43,7 @@ def fetch_tensorflow_repo(headers):
         raise ValueError(f"Error: HTTP {response.status_code}, {response.text}")
 
     print(f"Response is successful, HTTP {response.status_code}")
-    data = response.json() #Parse JSON data
+    data = response.json() #Parse JSON data (Object Data)
 
     return data
     
