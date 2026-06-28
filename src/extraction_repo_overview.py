@@ -53,22 +53,7 @@ def fetch_tensorflow_repo(headers):
 def save_to_json_file(data):
     time_stamp = datetime.now().strftime("%Y%m%d_%H%M%S") #Timestamp variable for our file name
 
-    file_name = f"tensorflow_tensorflow_{time_stamp}.json"
-    full_file_path = fr"data\raw\{file_name}"
-
-    try:
-        os.makedirs(os.path.dirname(full_file_path), exist_ok = True)
-
-        with open(full_file_path, 'w', encoding = 'utf-8') as f:
-            json.dump(data, f, indent = 4, ensure_ascii = False)
-
-        print(f"Data saved to {full_file_path} at {time_stamp} sucessfully!")
-
-    except(TypeError, ValueError) as e:
-        print(f"Failed to serialize data, Details: {e}")
     
-    except OSError as e:
-        print(f"File error, Details: {e}")
 
 
 # ---------- Main Extraction Script ---------- #
