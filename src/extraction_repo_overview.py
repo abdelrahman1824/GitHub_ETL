@@ -2,6 +2,7 @@ import requests
 from dotenv import load_dotenv
 import os
 import json
+import boto3
 from datetime import datetime
 
 # ---------- Configuration ---------- #
@@ -50,8 +51,10 @@ def fetch_tensorflow_repo(headers):
 
 # ---------- Creating a JSON file to save data ---------- #
 
-def save_to_json_file(data):
+def upload_file_to_s3(data):
     time_stamp = datetime.now().strftime("%Y%m%d_%H%M%S") #Timestamp variable for our file name
+
+
 
     
 
