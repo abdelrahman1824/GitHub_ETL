@@ -49,14 +49,31 @@ def fetch_tensorflow_repo(headers):
     return data
     
 
-# ---------- Creating a JSON file to save data ---------- #
+# ---------- Creating JSON file to save data ---------- #
+
+def save_to_json_file(data):
+    time_stamp = datetime.now().strftime("%Y%m%d_%H%M%S") #Timestamp variable for our file name
+    file_name = fr"tensorflow_tensorflow_{time_stamp}"
+    file_path = fr"data\raw\{file_name}"
+
+    try:
+        os.makedirs(os.path.dirname(file_path), exist_ok = True)
+
+        with open(file_name, 'w', encoding = "utf-8") as f:
+            json.dump(data, f, indent = 4, ensure_ascii = False)
+        
+        print(f"Data saved to {file_name} succesfully!")
+    
+    except (TypeError, ValueError) as e:
+        print(f"Failed to serialize data, details: {e}")
+    
+    except OSError as e:
+        print(f"Failed to find Directory/File, details: {e}")
+    
+
+# ---------- Uploading data to S3 Bucket ---------- #
 
 def upload_file_to_s3(data):
-    time_stamp = datetime.now().strftime("%Y%m%d_%H%M%S") #Timestamp variable for our file name
-
-
-
-    
 
 
 # ---------- Main Extraction Script ---------- #
