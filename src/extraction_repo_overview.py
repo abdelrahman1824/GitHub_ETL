@@ -2,6 +2,7 @@ import requests
 from dotenv import load_dotenv
 import os
 import json
+import boto3
 from datetime import datetime
 
 # ---------- Configuration ---------- #
@@ -43,11 +44,10 @@ def fetch_tensorflow_repo(headers):
         raise ValueError(f"Error: HTTP {response.status_code}, {response.text}")
 
     print(f"Response is successful, HTTP {response.status_code}")
-    data = response.json() #Parse JSON data (Object Data)
+    data = response.json() #Parse JSON data
 
     return data
     
-
 # ---------- Creating a JSON file to save data ---------- #
 
 def save_to_json_file(data):
@@ -69,7 +69,6 @@ def save_to_json_file(data):
     
     except OSError as e:
         print(f"File error, Details: {e}")
-
 
 # ---------- Main Extraction Script ---------- #
 
