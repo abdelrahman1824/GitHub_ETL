@@ -99,12 +99,23 @@ def upload_file_to_s3(file_name, Bucket, object_name = None):
 
 # ---------- Main Extraction Script ---------- #
 def main():
+    #Load API Token for GitHub
     token = load_github_token()
+
+    #Configure API Headers
     headers = build_api_headers(token)
+
+    #Request the API URL data
     data = fetch_tensorflow_repo(headers)
+    
+    #Creat a file for saving data
     file = save_to_json_file(data)
+
+    #Upload the file like Object to S3 Bucket
     Bucket = "my_bucket"
     upload_file_to_s3(file, Bucket)
+
+
 
 if __name__ == "__main__":
     main()
