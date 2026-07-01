@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 import os
 import json
 import boto3
+from botocore.exceptions import ClientError, NoCredentialsError
+import logging
 from datetime import datetime
 
 # ---------- Configuration ---------- #
@@ -48,31 +50,71 @@ def fetch_tensorflow_repo(headers):
 
     return data
     
-# ---------- Creating a JSON file to save data ---------- #
+
+# ---------- Creating JSON file to save data ---------- #
 
 def save_to_json_file(data):
     time_stamp = datetime.now().strftime("%Y%m%d_%H%M%S") #Timestamp variable for our file name
-
-    file_name = f"tensorflow_tensorflow_{time_stamp}.json"
-    full_file_path = fr"data\raw\{file_name}"
+    file_name = fr"tensorflow_tensorflow_{time_stamp}.json"
+    file_path = fr"data\raw\{file_name}"
 
     try:
-        os.makedirs(os.path.dirname(full_file_path), exist_ok = True)
+        os.makedirs(os.path.dirname(file_path), exist_ok = True)
 
-        with open(full_file_path, 'w', encoding = 'utf-8') as f:
+        with open(file_path, 'w', encoding = "utf-8") as f:
             json.dump(data, f, indent = 4, ensure_ascii = False)
-
-        print(f"Data saved to {full_file_path} at {time_stamp} sucessfully!")
-
-    except(TypeError, ValueError) as e:
-        print(f"Failed to serialize data, Details: {e}")
+        
+        print(f"Data saved to {file_name} succesfully!")
+    
+    except (TypeError, ValueError) as e:
+        print(f"Failed to serialize data, details: {e}")
     
     except OSError as e:
-        print(f"File error, Details: {e}")
+        print(f"Failed to find Directory/File, details: {e}")
+    
+    return file_path
+    
+
+# ---------- Uploading data to S3 Bucket ---------- #
+
+def upload_file_to_s3(file_name, Bucket, object_name = None):
+    s3_client = boto3.client('s3')
+
+    # If the object name is not determined then replace it with the file name
+    if object_name == None:
+        object_name = os.path.basename(file_name)
+
+    # Upload file like object to S3
+    try:
+        s3_client.upload_file(file_name, Bucket, object_name)
+
+    except FileNotFoundError as e:
+        print(fr"File was not found in the directory, details: {e}")
+
+    except NoCredentialsError as e:
+        print(fr"AWS credentials wasn't found, details: {e}")
+
+    except ClientError as e:
+        print(fr"Client connection error, details: {e}")
 
 # ---------- Main Extraction Script ---------- #
+def main():
+    #Load API Token for GitHub
+    token = load_github_token()
 
-token = load_github_token()
-headers = build_api_headers(token)
-data = fetch_tensorflow_repo(headers)
-save_to_json_file(data)
+    #Configure API Headers
+    headers = build_api_headers(token)
+
+    #Request the API URL data
+    data = fetch_tensorflow_repo(headers)
+    
+    #Creat a file for saving data
+    file = save_to_json_file(data)
+
+    #Upload the file like Object to S3 Bucket
+    Bucket = "my_bucket"
+    upload_file_to_s3(file, Bucket)
+
+if __name__ == "__main__":
+    main()
+
