@@ -115,8 +115,6 @@ def main():
     Bucket = "my_bucket"
     upload_file_to_s3(file, Bucket)
 
-
-
 if __name__ == "__main__":
     main()
 
