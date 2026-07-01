@@ -84,23 +84,28 @@ def upload_file_to_s3(file_name, Bucket, object_name = None):
     if object_name == None:
         object_name = os.path.basename(file_name)
 
+    # Upload file like object to S3
     try:
         s3_client.upload_file(file_name, Bucket, object_name)
 
     except FileNotFoundError as e:
-        print(fr"File was not found in the directory, details {e}")
+        print(fr"File was not found in the directory, details: {e}")
 
     except NoCredentialsError as e:
-        print(fr"AWS credentials wasn't found, details {e}")
+        print(fr"AWS credentials wasn't found, details: {e}")
 
     except ClientError as e:
-        print(fr"Client connection error, details {e}")
+        print(fr"Client connection error, details: {e}")
 
 # ---------- Main Extraction Script ---------- #
+def main():
+    token = load_github_token()
+    headers = build_api_headers(token)
+    data = fetch_tensorflow_repo(headers)
+    file = save_to_json_file(data)
+    Bucket = "my_bucket"
+    upload_file_to_s3(file, Bucket)
 
-token = load_github_token()
-headers = build_api_headers(token)
-data = fetch_tensorflow_repo(headers)
-file = save_to_json_file(data)
-Bucket = "my_bucket"
-upload_file_to_s3(file, Bucket, object_name = None)
+if __name__ == "__main__":
+    main()
+
