@@ -6,6 +6,7 @@ import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 import logging
 from datetime import datetime
+import tempfile
 
 # ---------- Configuration ---------- #
 
@@ -39,6 +40,8 @@ def fetch_tensorflow_repo(headers):
     #Error handling
     try:
         response = requests.get(url, headers = headers, timeout = (connect_timeout, read_timeout))
+        time_stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
     except requests.exception.Timeout:
         raise RuntimeError("GitHub API request timeout")
     
@@ -48,54 +51,87 @@ def fetch_tensorflow_repo(headers):
     print(f"Response is successful, HTTP {response.status_code}")
     data = response.json() #Parse JSON data
 
-    return data
+    return data, time_stamp
     
 
 # ---------- Creating JSON file to save data ---------- #
 
-def save_to_json_file(data):
-    time_stamp = datetime.now().strftime("%Y%m%d_%H%M%S") #Timestamp variable for our file name
+def upload_json_file_to_s3(data, time_stamp):
+    print("Uploading extraction snapshot to S3...")
     file_name = fr"tensorflow_tensorflow_{time_stamp}.json"
-    file_path = fr"data\raw\{file_name}"
+    
+    load_dotenv()
 
+    key_id = os.getenv("AWS_ACCESS_KEY_ID")
+    secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+    bucket = os.getenv("BUCKET_NAME")
+    region = os.getenv("REGION")
+
+    print(f"AWS_ACCESS_KEY_ID = {key_id}")
+
+    print(f"AWS_SECRET_ACCESS_KEY = {'SET' if secret_key else None}")
+
+    print(f"BUCKET_NAME = {bucket}")
+
+    print(f"REGION = {region}")
+
+    if not all ([key_id, secret_key, bucket, region]):
+        print("Missing AWS configuration in .env!")
+
+    print("Connecting to AWS S3...")
     try:
-        os.makedirs(os.path.dirname(file_path), exist_ok = True)
+        s3 = boto3.client('s3',
+                          aws_access_key_id = key_id,
+                          aws_secret_access_key = secret_key,
+                          region_name = region)
+        s3_key = f"raw_data/{file_name}"
 
-        with open(file_path, 'w', encoding = "utf-8") as f:
-            json.dump(data, f, indent = 4, ensure_ascii = False)
-        
-        print(f"Data saved to {file_name} succesfully!")
+        s3.put_object(Bucket = bucket, Key = s3_key,
+                      Body = json.dumps(data, indent = 4, ensure_ascii=False),
+                      ContentType = "application/json")
+
+        print(f"Snapshot uploaded succesfuly at" 
+              f"{datetime.now().strftime("%Y%m%d_%H%M%S")}")
+
+        return True
+
+    except Exception as e:
+        print(f"Failed to upload extraction snapshot, details: {e}")
+
+        return False
+
+
+# ---------- Verify that data is uploaded ---------- #
+
+def verify_upload():
+    print("\nVerifying data is uploaded...")
+
+    load_dotenv()
+    key_id = os.getenv("AWS_ACCESS_KEY_ID")
+    secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+    bucket = os.getenv("BUCKET_NAME")
+    region = os.getenv("REGION")
     
-    except (TypeError, ValueError) as e:
-        print(f"Failed to serialize data, details: {e}")
-    
-    except OSError as e:
-        print(f"Failed to find Directory/File, details: {e}")
-    
-    return file_path
-    
-
-# ---------- Uploading data to S3 Bucket ---------- #
-
-def upload_file_to_s3(file_name, Bucket, object_name = None):
-    s3_client = boto3.client('s3')
-
-    # If the object name is not determined then replace it with the file name
-    if object_name == None:
-        object_name = os.path.basename(file_name)
-
-    # Upload file like object to S3
+    print("Connecting to AWS S3...")
     try:
-        s3_client.upload_file(file_name, Bucket, object_name)
+        s3 = boto3.client('s3',
+                            aws_access_key_id = key_id,
+                            aws_secret_access_key = secret_key,
+                            region_name = region)
 
-    except FileNotFoundError as e:
-        print(fr"File was not found in the directory, details: {e}")
+        bucket_content = s3.list_objects_v2(Bucket = bucket, Prefix = "raw_data")
+        snapshots_uploaded = len(bucket_content["Contents"])
 
-    except NoCredentialsError as e:
-        print(fr"AWS credentials wasn't found, details: {e}")
+        print(f"Snapshot is captured and uploaded Successfuly")
+        print(f"Snapshots Uploaded: {snapshots_uploaded}")
 
-    except ClientError as e:
-        print(fr"Client connection error, details: {e}")
+        return True
+
+    except Exception as e:
+        print(f"Error while verifying uploaded snapshots, details: {e}")
+
+        return False
+
 
 # ---------- Main Extraction Script ---------- #
 def main():
@@ -106,15 +142,16 @@ def main():
     headers = build_api_headers(token)
 
     #Request the API URL data
-    data = fetch_tensorflow_repo(headers)
+    data, time_stamp = fetch_tensorflow_repo(headers)
     
-    #Creat a file for saving data
-    file = save_to_json_file(data)
+    #Upload JSON snapshot in S3
+    success = upload_json_file_to_s3(data, time_stamp)
 
-    #Upload the file like Object to S3 Bucket
-    Bucket = "my_bucket"
-    upload_file_to_s3(file, Bucket)
+    return success
 
 if __name__ == "__main__":
-    main()
+    success = main()
+
+    if success:
+        verify_upload()
 
