@@ -69,14 +69,11 @@ def upload_json_file_to_s3(data, time_stamp):
 
     print(f"AWS_ACCESS_KEY_ID = {key_id}")
 
-    print(f"AWS_SECRET_ACCESS_KEY = {'SET' if secret_key else None}")
+    print(f"AWS_SECRET_ACCESS_KEY = {'FOUND' if secret_key else None}")
 
     print(f"BUCKET_NAME = {bucket}")
 
     print(f"REGION = {region}")
-
-    if not all ([key_id, secret_key, bucket, region]):
-        print("Missing AWS configuration in .env!")
 
     print("Connecting to AWS S3...")
     try:
@@ -84,6 +81,7 @@ def upload_json_file_to_s3(data, time_stamp):
                           aws_access_key_id = key_id,
                           aws_secret_access_key = secret_key,
                           region_name = region)
+        
         s3_key = f"raw_data/{file_name}"
 
         s3.put_object(Bucket = bucket, Key = s3_key,

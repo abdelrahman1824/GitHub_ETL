@@ -23,6 +23,8 @@ Data Extraction => This is the function responsiple for getting the data from ou
 JSON Data snapshots => Dumping our JSON extraction snapshot into an S3 Bucket
 
 # Phase 2
-02/09/2026: Data has been extracted, now we have to transform our data in a way so that we can create a dataset for our analytics on the tensorflow repo, this includes choosing the right features that can help in our analytics and maybe we can use feature engineering to create features from our choosen features that can also help in more accurate analysis
+02/09/2026: Data has been extracted, now we have to transform our data in a way so that we can create a dataset for our analytics on the tensorflow repo, this includes choosing the right features that can help in our analytics and maybe we can use feature engineering to create features from our choosen features that can also help in more accurate analysis.
+
+Raw Data Processing => Choosing the keys from the data that shall be used in creating our table that will be later loaded to the database and generated to CSV.
 
 
