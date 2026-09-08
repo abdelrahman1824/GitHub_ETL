@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 import boto3
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 #---------- Download data from S3 ----------#
 def download_raw_data(client, bucket_name, s3_key):
@@ -21,8 +21,7 @@ def download_raw_data(client, bucket_name, s3_key):
             timestamp = raw_timestamp.removesuffix('.json')
 
             #Convert into a datetime object
-            dt_obj = datetime.strptime(timestamp,"%Y%m%d_%H%M%S")
-            extraction_time = dt_obj.strftime(fr"%Y/%m/%d_%H:%M:%S")
+            extraction_time = datetime.strptime(timestamp,"%Y%m%d_%H%M%S").replace(tzinfo=timezone.utc)
             
         except Exception as e:
             print(f"Couldn't convert extraction time into time object, details: {e}")
@@ -42,6 +41,9 @@ def download_raw_data(client, bucket_name, s3_key):
 def filter_snapshot(snapshot, extraction_time,s3_key):
     print("\nFiltering JSON data...")
 
+    created_at = datetime.strptime(snapshot.get("created_at"), "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    updated_at = datetime.strptime(snapshot.get("updated_at"), "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+
     data = {
         "repo_id":snapshot.get("id"),
         "name":snapshot.get("full_name"),
@@ -50,8 +52,8 @@ def filter_snapshot(snapshot, extraction_time,s3_key):
         "forks_count":snapshot.get("forks_count"),
         "open_issues":snapshot.get("open_issues_count"),
         "subscribers_count":snapshot.get("subscribers_count"),
-        "created_at":snapshot.get("created_at"),
-        "updated_at":snapshot.get("updated_at"),
+        "created_at":created_at,
+        "updated_at":updated_at,
         "extracted_at":extraction_time,
         "s3_key":s3_key 
     }
