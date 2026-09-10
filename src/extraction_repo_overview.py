@@ -56,7 +56,7 @@ def fetch_tensorflow_repo(headers):
 
 # ---------- Creating JSON file to save data ---------- #
 
-def upload_json_file_to_s3(data, time_stamp):
+def upload_json_data_to_s3(data, time_stamp):
     print("Uploading extraction snapshot to S3...")
     file_name = fr"tensorflow_tensorflow_{time_stamp}.json"
     

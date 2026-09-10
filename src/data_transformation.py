@@ -43,7 +43,8 @@ def filter_snapshot(snapshot, extraction_time,s3_key):
 
     created_at = datetime.strptime(snapshot.get("created_at"), "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
     updated_at = datetime.strptime(snapshot.get("updated_at"), "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
-
+    pushed_at = datetime.strptime(snapshot.get("pushed_at"), "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    
     data = {
         "repo_id":snapshot.get("id"),
         "name":snapshot.get("full_name"),
@@ -52,6 +53,7 @@ def filter_snapshot(snapshot, extraction_time,s3_key):
         "forks_count":snapshot.get("forks_count"),
         "open_issues":snapshot.get("open_issues_count"),
         "subscribers_count":snapshot.get("subscribers_count"),
+        "pushed_at":pushed_at,
         "created_at":created_at,
         "updated_at":updated_at,
         "extracted_at":extraction_time,
