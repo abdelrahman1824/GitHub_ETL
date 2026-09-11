@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import boto3
 import json
 from datetime import datetime, timezone
+from decorators import *
 
 #---------- Download data from S3 ----------#
 def download_raw_data(client, bucket_name, s3_key):
@@ -63,8 +64,8 @@ def filter_snapshot(snapshot, extraction_time,s3_key):
 
     return data
 
-#---------- Create a processing function ----------#
-
+#---------- Create the main processing function ----------#
+@timer
 def process_data():
     print("Data processing initialized...")
     #Connecxt to AWS S3 client
@@ -120,11 +121,3 @@ def process_data():
 
     except Exception as e:
         print(f"Snapshot can't be processed, details: {e}")
-
-#---------- Create Main function ----------#
-
-def main():
-    processed_data = process_data()
-    print(f"Filtered data: {processed_data}")
-
-main()

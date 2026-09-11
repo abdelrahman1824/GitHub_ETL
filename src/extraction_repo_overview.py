@@ -7,6 +7,7 @@ from botocore.exceptions import ClientError, NoCredentialsError
 import logging
 from datetime import datetime
 import tempfile
+from decorators import *
 
 # ---------- Configuration ---------- #
 
@@ -88,10 +89,8 @@ def upload_json_data_to_s3(data, time_stamp):
                       Body = json.dumps(data, indent = 4, ensure_ascii=False),
                       ContentType = "application/json")
 
-        print(f"Snapshot uploaded succesfuly at" 
+        print(f"Snapshot uploaded succesfuly at " 
               f"{datetime.now().strftime("%Y%m%d_%H%M%S")}")
-
-        return True
 
     except Exception as e:
         print(f"Failed to upload extraction snapshot, details: {e}")
@@ -132,7 +131,8 @@ def verify_upload():
 
 
 # ---------- Main Extraction Script ---------- #
-def main():
+@timer
+def extract_repo_data():
     #Load API Token for GitHub
     token = load_github_token()
 
@@ -143,13 +143,4 @@ def main():
     data, time_stamp = fetch_tensorflow_repo(headers)
     
     #Upload JSON snapshot in S3
-    success = upload_json_file_to_s3(data, time_stamp)
-
-    return success
-
-if __name__ == "__main__":
-    success = main()
-
-    if success:
-        verify_upload()
-
+    upload_json_data_to_s3(data, time_stamp)
