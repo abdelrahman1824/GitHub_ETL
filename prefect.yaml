@@ -35,7 +35,7 @@ deployments:
   schedules:
     - cron: "0 */4 * * *" 
       timezone: "UTC"
-      active: false
+      active: true
   flow_name: github_etl_pipeline
   entrypoint: src/Orchestrated_Pipeline/tensorflow_data_generation_etl.py:main
   parameters: {}
