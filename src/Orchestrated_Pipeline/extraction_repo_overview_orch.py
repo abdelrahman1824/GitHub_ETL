@@ -44,7 +44,7 @@ def fetch_tensorflow_repo(headers):
         response = requests.get(url, headers = headers, timeout = (connect_timeout, read_timeout))
         time_stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    except requests.exception.Timeout:
+    except requests.exceptions.Timeout:
         raise RuntimeError("GitHub API request timeout")
     
     if response.status_code != 200:
