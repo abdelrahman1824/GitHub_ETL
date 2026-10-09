@@ -33,7 +33,7 @@ deployments:
     - "postgreSQL"
   description: "Generating Tensorflow rpository data for repository analysis"
   schedules:
-    - cron: "0 */4 * * *" 
+    - cron: "0 */10 * * *" 
       timezone: "UTC"
       active: true
   flow_name: github_etl_pipeline
