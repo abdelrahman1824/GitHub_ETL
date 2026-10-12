@@ -4,7 +4,7 @@ import os
 from decorators import *
 from prefect import flow, task, get_run_logger
 
-#-------- Creat connection establishing function --------#
+#-------- Create connection establishing function --------#
 def create_postgres_connection():
     load_dotenv()
 
@@ -41,15 +41,51 @@ def create_postgres_connection():
 
     return postgres_connection
 
+#-------- Getting assigned repos from repositories table --------#
+def get_assigned_repos(cursor):
+
+    select_repositories = """ 
+    SELECT github_repo_id, repo_name, owner_id
+    FROM analytics.repositories
+    """
+
+    cursor.execute(
+        select_repositories
+    )
+    assigned_repos = {
+        row[0]: {"repo_name": row[1],
+                 "owner_id": row[2]}
+        for row in cursor.fetchall()
+    }
+
+    return assigned_repos
+
 #-------- Creat the main data loading function --------#
 @task(name = "load_to_database", retries = 2, retry_delay_seconds = 45, cache_policy = None)
 @timer
-def load_snapshot(processed_data):
+def load_snapshot(processed_data, assigned_repos):
     logger = get_run_logger()
 
     logger.info("Loading data into the Database...")
 
-    insert_statement = """
+    insert_repositories = """ 
+    INSERT INTO analytics.repositories
+    (
+    github_repo_id,
+    repo_name,
+    owner_id,
+    created_at
+    )
+    VALUES
+    (
+    %(repo_id)s,
+    %(name)s,
+    %(owner_id)s,
+    %(created_at)s
+    )
+    """
+
+    insert_repository_snapshots = """
     INSERT INTO analytics.repository_snapshots
     (
     repository_name,
@@ -89,8 +125,11 @@ def load_snapshot(processed_data):
 
         with postgres_connection as connection:
             with connection.cursor() as cursor:
+
+                assigned_repos = get_assigned_repos(cursor)
+
                 cursor.execute(
-                    insert_statement,
+                    insert_repository_snapshots,
                     processed_data
                 )
                 snapshot_id = cursor.fetchone()[0]
