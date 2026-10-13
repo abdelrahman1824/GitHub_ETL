@@ -49,7 +49,27 @@ def load_snapshot(processed_data):
 
     logger.info("Loading data into the Database...")
 
-    insert_statement = """
+    insert_repository = """ 
+    INSERT INTO analytics.repositories
+    (
+    github_repo_id,
+    repo_name,
+    owner_id,
+    created_at
+    )
+    VALUES
+    (
+    %(repo_id)s,
+    %(name)s,
+    %(owner_id)s,
+    %(created_at)s
+    )
+    ON CONFLICT (github_repo_id, repo_name)
+    DO NOTHING
+    RETURN repo_id
+    """
+
+    insert_snapshot = """
     INSERT INTO analytics.repository_snapshots
     (
     repository_name,
@@ -89,8 +109,15 @@ def load_snapshot(processed_data):
 
         with postgres_connection as connection:
             with connection.cursor() as cursor:
+
                 cursor.execute(
-                    insert_statement,
+                    insert_repository,
+                    processed_data
+                )
+                repo_id = cursor.fetchone()[1]
+
+                cursor.execute(
+                    insert_snapshot,
                     processed_data
                 )
                 snapshot_id = cursor.fetchone()[0]
