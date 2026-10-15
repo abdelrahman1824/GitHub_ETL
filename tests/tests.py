@@ -71,7 +71,6 @@ def process_data():
         print(f"Couldn't process the data, details:{e}")
         return False
 
-
 def create_postgres_connection():
     load_dotenv()
 
@@ -108,6 +107,27 @@ def create_postgres_connection():
 
     return postgres_connection
 
+def get_stored_repos(cursor):
+    select_repos = """ 
+    SELECT github_repo_id, repo_name, owner_id
+    FROM analytics.repositories;
+    """
+    cursor.execute(
+        select_repos
+    ) 
+
+    stored_repos = {
+        row[0]:
+        {
+            "repo_name": row[1],
+            "owner_id": row[2]
+        }
+        for row in cursor.fetchall()
+    }
+
+    print(f"Stored repos: {stored_repos}")
+
+    return stored_repos
 
 def load_snapshot(processed_data):
     insert_repository = """ 
@@ -127,41 +147,7 @@ def load_snapshot(processed_data):
     )
     ON CONFLICT (github_repo_id, repo_name)
     DO NOTHING
-    RETURN repo_id
-    """
-
-    insert_snapshot = """
-    INSERT INTO analytics.repository_snapshots
-    (
-    repository_name,
-    repository_id,
-    owner_id,
-    stargazers_count,
-    forks_count,
-    open_issues,
-    subscribers_count,
-    created_at,
-    pushed_at,
-    updated_at,
-    extracted_at,
-    s3_object
-    )
-    VALUES
-    (
-    %(name)s,
-    %(repo_id)s,
-    %(owner_id)s,
-    %(stargazers_count)s,
-    %(forks_count)s,
-    %(open_issues)s,
-    %(subscribers_count)s,
-    %(created_at)s,
-    %(pushed_at)s,
-    %(updated_at)s,
-    %(extracted_at)s,
-    %(s3_key)s
-    )
-    RETURNING snapshot_id
+    RETURNING repo_id;
     """
 
     try:
@@ -170,19 +156,87 @@ def load_snapshot(processed_data):
         with postgres_connection as connection:
             with connection.cursor() as cursor:
 
-                cursor.execute(
-                    insert_repository,
-                    processed_data
+                #The repo details of the snapshot
+                snapshot_repo = {
+                    "snapshot_repo_id": processed_data.get("repo_id")
+                }
+
+                #The repo id for comparing stored repos
+                snapshot_repo_id = snapshot_repo.get("snapshot_repo_id")
+                print(snapshot_repo_id)
+
+                stored_repos = get_stored_repos(cursor)
+                
+                if not stored_repos:
+                    print("New repository!")
+                    cursor.execute(
+                            insert_repository,
+                            processed_data
+                        )
+                    repo_id = cursor.fetchone()[0]
+                
+                else:
+                    if snapshot_repo_id not in stored_repos:
+                        print("New repository!")  
+                        cursor.execute(
+                                insert_repository,
+                                processed_data
+                            )
+                        repo_id = cursor.fetchone()[0]
+
+                    else:
+                        get_stored_repo_id = """ 
+                        SELECT repo_id 
+                        FROM analytics.repositories
+                        WHERE github_repo_id = %(snapshot_repo_id)s
+                        """
+                    
+                        cursor.execute(
+                            get_stored_repo_id,
+                            snapshot_repo
+                        )
+                        repo_id = cursor.fetchone()[0]
+                        print(repo_id)
+
+                insert_snapshot = """
+                INSERT INTO analytics.repository_snapshots
+                (
+                stargazers_count,
+                forks_count,
+                open_issues,
+                subscribers_count,
+                pushed_at,
+                updated_at,
+                extracted_at,
+                s3_object,
+                repo_id
                 )
-                repo_id = cursor.fetchone()[1]
+                VALUES
+                (
+                %(stargazers_count)s,
+                %(forks_count)s,
+                %(open_issues)s,
+                %(subscribers_count)s,
+                %(pushed_at)s,
+                %(updated_at)s,
+                %(extracted_at)s,
+                %(s3_key)s,
+                %(repo_id)s
+                )
+                RETURNING snapshot_id;
+                """
+                
+                snapshot_parameters = processed_data.copy()
+                snapshot_parameters["repo_id"] = repo_id
 
                 cursor.execute(
                     insert_snapshot,
-                    processed_data
+                    snapshot_parameters
                 )
                 snapshot_id = cursor.fetchone()[0]
 
                 print(f"Data inserted as a new row, with snapshot_id {snapshot_id}")
+
         return True
 
     except Exception as e:
@@ -191,3 +245,19 @@ def load_snapshot(processed_data):
         return False
 
 if __name__ == "__main__":
+    data = {
+            "repo_id":55,
+            "name": "scikit-learn",
+            "owner_id":4356,
+            "stargazers_count":56757,
+            "forks_count":675785,
+            "open_issues":56,
+            "subscribers_count":6567,
+            "pushed_at":'2015-11-07 03:19:20.000 +0200',
+            "created_at":'2015-11-07 03:19:20.000 +0200',
+            "updated_at":'2015-11-07 03:19:20.000 +0200',
+            "extracted_at":'2015-11-07 03:19:20.000 +0200',
+            "s3_key":"ghfgh" 
+            }
+
+    load_snapshot(data)
